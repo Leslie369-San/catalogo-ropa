@@ -17,11 +17,11 @@
                 <p class="app-subtitle">Sistema de Gestión de Inventario</p>
             </div>
             <nav class="navbar">
-                <button class="nav-btn active" onclick="goToSection('catalog')">📦 Catálogo</button>
-                <button class="nav-btn" onclick="goToSection('cart')">
+                <button id="nav-catalog-btn" class="nav-btn" onclick="goToSection('catalog')" style="display: none;">📦 Catálogo</button>
+                <button id="nav-cart-btn" class="nav-btn" onclick="goToSection('cart')" style="display: none;">
                     🛒 Carrito <span id="cart-count" class="cart-badge">0</span>
                 </button>
-                <button class="nav-btn" onclick="goToSection('admin')">⚙️ Admin</button>
+                <button id="nav-admin-btn" class="nav-btn" onclick="goToSection('admin')" style="display: none;">⚙️ Admin</button>
                 <button class="nav-btn" onclick="toggleTheme()">🌙 Tema</button>
             </nav>
         </div>
@@ -31,6 +31,24 @@
     <main class="main-content">
         <!-- SECCIÓN DE CATÁLOGO -->
         <section id="catalog-section" class="section active">
+            <section id="login-section" class="section active">
+            <div class="container" style="max-width: 400px; margin-top: 50px;">
+                <div class="login-card" style="background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+                    <h3 style="text-align: center; color: #1e293b; margin-bottom: 20px;"> Ingreso al Sistema</h3>
+                    <form id="login-form" onsubmit="handleLogin(event)">
+                        <div class="form-group" style="margin-bottom: 15px;">
+                            <label style="display:block; margin-bottom: 5px; font-weight:600;">Usuario</label>
+                            <input type="text" id="login-username" required placeholder="Ej. admin" style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:6px;">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 20px;">
+                            <label style="display:block; margin-bottom: 5px; font-weight:600;">Contraseña</label>
+                            <input type="password" id="login-password" required placeholder="••••••••" style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:6px;">
+                        </div>
+                        <button type="submit" class="btn-primary" style="width: 100%; padding: 12px; font-weight: 600;">Iniciar Sesión</button>
+                    </form>
+                </div>
+            </div>
+        </section>
             <div class="container">
                 <h2>Nuestro Catálogo</h2>
                 

@@ -575,3 +575,89 @@ window.addEventListener('storage', (event) => {
 });
 
 console.log('✅ Script principal cargado');
+/**
+ * Gestiona la autenticación de usuarios y asignación condicional de roles
+ */
+async function handleLogin(event) {
+  event.preventDefault();
+  
+  const usernameInput = document.getElementById('login-username').value.trim();
+  const passwordInput = document.getElementById('login-password').value.trim();
+  
+  showNotification('Verificando credenciales...', 'info');
+
+  try {
+    // Consultamos el usuario haciendo un join explícito con la tabla roles
+    const { data, error } = await supabaseClient
+      .from('usuarios')
+      .select('*, roles(nombre_rol)')
+      .eq('username', usernameInput)
+      .eq('password_hash', passwordInput)
+      .single(); // Esperamos una única fila coincidente
+
+    if (error || !data) {
+      showNotification('Usuario o contraseña incorrectos', 'error');
+      return;
+    }
+
+    // Extraemos el rol del objeto anidado devuelto por el join de Supabase
+    const userRole = data.roles ? data.roles.nombre_rol : 'cliente';
+    
+    // Guardamos el estado de la sesión en el almacenamiento temporal del navegador
+    const sessionUser = {
+      username: data.username,
+      fullName: data.nombre_completo,
+      role: userRole
+    };
+    sessionStorage.setItem('activeSession', JSON.stringify(sessionUser));
+
+    showNotification(`¡Bienvenido, ${data.nombre_completo}!`, 'success');
+    
+    // Activamos la reactividad de la interfaz según el rol asignado
+    applyRoleAuthorization(userRole);
+
+  } catch (err) {
+    console.error('Error en proceso de login:', err);
+    showNotification('Error interno al conectar con el servidor', 'error');
+  }
+}
+
+/**
+ * Renderizado Condicional: Muestra u oculta módulos del DOM según el rol jerárquico
+ */
+function applyRoleAuthorization(role) {
+  // 1. Ocultar de inmediato la sección del formulario de login
+  document.getElementById('login-section').classList.remove('active');
+  
+  // 2. Recuperar referencias de los botones de la barra de navegación
+  const catalogBtn = document.getElementById('nav-catalog-btn');
+  const cartBtn = document.getElementById('nav-cart-btn');
+  const adminBtn = document.getElementById('nav-admin-btn');
+
+  // 3. Habilitar accesos comunes para ambos roles
+  if (catalogBtn) catalogBtn.style.display = 'inline-block';
+  if (cartBtn) cartBtn.style.display = 'inline-block';
+
+  // 4. Aplicar restricción estricta sobre el panel de control administrativo
+  if (role === 'admin') {
+    if (adminBtn) adminBtn.style.display = 'inline-block';
+    // Redirección por defecto al panel de control integral
+    goToSection('admin');
+  } else {
+    if (adminBtn) adminBtn.style.display = 'none';
+    // Redirección por defecto a la vista comercial de clientes
+    goToSection('catalog');
+  }
+}
+document.addEventListener('DOMContentLoaded', () => {
+  loadTheme();
+  initializeApp();
+
+  // Verificación preventiva de persistencia de sesión
+  const savedSession = sessionStorage.getItem('activeSession');
+  if (savedSession) {
+    const user = JSON.parse(savedSession);
+    // Demora sutil para esperar el renderizado del catálogo cloud
+    setTimeout(() => applyRoleAuthorization(user.role), 500);
+  }
+});
