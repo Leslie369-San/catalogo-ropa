@@ -144,18 +144,28 @@ function applyFilters() {
   const priceRange = document.getElementById('price-filter');
   const priceValue = document.getElementById('price-value');
 
-  if (categorySelect) {
-    const categoryValue = categorySelect.value;
-    const categoryParam = categoryValue === 'all' ? 'all' : parseInt(categoryValue, 10);
-    productController.filterByCategory(categoryParam);
+  // Primero resetear al total de productos
+  productController.filteredProducts = [...productController.products];
+
+  // Filtrar por categoría
+  if (categorySelect && categorySelect.value !== 'all') {
+    const categoryId = parseInt(categorySelect.value, 10);
+    productController.filteredProducts = productController.filteredProducts.filter(p =>
+      parseInt(p.categoryId) === categoryId || 
+      parseInt(p.category_id) === categoryId
+    );
   }
 
+  // Filtrar por precio sobre el resultado anterior
   if (priceRange) {
     const maxPrice = parseInt(priceRange.value);
     if (priceValue) priceValue.textContent = maxPrice;
-    productController.filterByPrice(0, maxPrice);
+    productController.filteredProducts = productController.filteredProducts.filter(
+      p => p.price >= 0 && p.price <= maxPrice
+    );
   }
 
+  productController.currentPage = 1;
   const filtered = productController.getPaginatedProducts(1);
   catalogView.render(filtered);
   catalogView.renderPagination(1, productController.getTotalPages());
