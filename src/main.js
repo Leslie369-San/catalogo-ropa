@@ -191,6 +191,13 @@ function resetFilters() {
   auditLogger.log('FILTERS_RESET', {});
 }
 
+function removeFromCart(productId) {
+  shoppingCart.removeItem(productId);
+  renderCartBadge();
+  renderCartSection(); // re-renderiza el carrito
+  auditLogger.log('CART_ITEM_REMOVED', { productId });
+}
+
 /**
  * Maneja la búsqueda
  */

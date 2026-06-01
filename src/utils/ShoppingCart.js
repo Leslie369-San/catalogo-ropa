@@ -175,10 +175,10 @@ class ShoppingCart {
       html += `
         <tr class="cart-item">
           <td>${item.name}</td>
-          <td><input type="number" value="${item.quantity}" min="1" onchange="shoppingCart.updateQuantity(${item.id}, this.value)"></td>
+          <td><input type="number" value="${item.quantity}" min="1" onchange="shoppingCart.updateQuantity(${item.id}, this.value); renderCartSection(); renderCartBadge();"></td>
           <td>$${item.price.toFixed(2)}</td>
           <td>$${subtotal}</td>
-          <td><button onclick="shoppingCart.removeItem(${item.id})">Eliminar</button></td>
+          <td><button onclick="removeFromCart(${item.id})">Eliminar</button></td>
         </tr>
       `;
     });
@@ -188,6 +188,7 @@ class ShoppingCart {
       <p>Total: <strong>$${this.getTotal().toFixed(2)}</strong></p>
       <button class="btn-checkout" onclick="openCheckoutModal()">Proceder al Pago</button>
       <button class="btn-continue-shopping" onclick="goToSection('catalog')">Continuar Comprando</button>
+      
     </div>`;
 
     return html;
