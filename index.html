@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Sistema de Gestión de Catálogo de Ropa">
+    <meta name="keywords" content="ropa, catálogo, tienda, ecommerce">
+    <title>Catálogo de Ropa - Sistema de Gestión</title>
+    <link rel="stylesheet" href="./assets/styles.css">
+</head>
+<body>
+    <!-- HEADER -->
+    <header class="header">
+        <div class="container">
+            <div class="header-top">
+                <h1 class="app-title">👗 Catálogo de Ropa</h1>
+                <p class="app-subtitle">Sistema de Gestión de Inventario</p>
+            </div>
+            <nav class="navbar">
+                <button class="nav-btn active" onclick="goToSection('catalog')">📦 Catálogo</button>
+                <button class="nav-btn" onclick="goToSection('cart')">
+                    🛒 Carrito <span id="cart-count" class="cart-badge">0</span>
+                </button>
+                <button class="nav-btn" onclick="goToSection('admin')">⚙️ Admin</button>
+                <button class="nav-btn" onclick="toggleTheme()">🌙 Tema</button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+        <!-- SECCIÓN DE CATÁLOGO -->
+        <section id="catalog-section" class="section active">
+            <div class="container">
+                <h2>Nuestro Catálogo</h2>
+                
+                <!-- Barra de Búsqueda -->
+                <div id="search-container" class="search-container"></div>
+
+                <!-- Estadísticas -->
+                <div id="statistics" class="statistics"></div>
+
+                <div class="catalog-wrapper">
+                    <!-- Panel de Filtros -->
+                    <aside id="filter-panel" class="filter-panel"></aside>
+
+                    <!-- Grid de Productos -->
+                    <div class="products-section">
+                        <div id="products-container" class="products-grid"></div>
+                        <div id="pagination" class="pagination"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECCIÓN DE CARRITO -->
+        <section id="cart-section" class="section">
+            <div class="container">
+                <h2>Carrito de Compras</h2>
+                <div id="cart-container" class="cart-container"></div>
+            </div>
+        </section>
+
+        <!-- SECCIÓN DE ADMINISTRACIÓN -->
+        <section id="admin-section" class="section">
+            <div class="container">
+                <h2>Panel de Administración</h2>
+                
+                <div class="admin-tabs">
+                    <button class="tab-btn active" onclick="showAdminTab('dashboard')">Dashboard</button>
+                    <button class="tab-btn" onclick="showAdminTab('products')">Productos</button>
+                    <button class="tab-btn" onclick="showAdminTab('audit')">Auditoría</button>
+                </div>
+
+                <!-- Tab: Dashboard -->
+                <div id="dashboard-tab" class="admin-tab active">
+                    <h3>Resumen del Sistema</h3>
+                    <div id="admin-statistics" class="stats-grid"></div>
+                    <div id="pending-approval" class="pending-section"></div>
+                </div>
+
+                <!-- Tab: Productos -->
+                <div id="products-tab" class="admin-tab">
+                    <h3>Gestión de Productos</h3>
+                    <div class="form-section">
+                        <form id="product-form" class="product-form" onsubmit="handleProductSubmit(event)">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Código del Producto</label>
+                                    <input type="text" name="code" required placeholder="PROD-001">
+                                </div>
+                                <div class="form-group">
+                                    <label>Nombre</label>
+                                    <input type="text" name="name" required placeholder="Nombre del producto">
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Categoría</label>
+                                    <select name="category_id" required id="category-select"></select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Precio ($)</label>
+                                    <input type="number" name="price" step="0.01" required placeholder="0.00">
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Stock</label>
+                                    <input type="number" name="stock" required placeholder="0">
+                                </div>
+                                <div class="form-group">
+                                    <label>Estado de Calidad</label>
+                                    <select name="quality_status" required>
+                                        <option value="approved">Aprobado</option>
+                                        <option value="pending">Pendiente</option>
+                                        <option value="rejected">Rechazado</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Descripción</label>
+                                <textarea name="description" placeholder="Descripción del producto" rows="3"></textarea>
+                            </div>
+
+                            <div class="form-group">
+                                <label>URL de Imagen</label>
+                                <input type="url" name="image_url" placeholder="https://example.com/image.jpg">
+                            </div>
+
+                            <div class="form-group">
+                                <label>
+                                    <input type="checkbox" name="is_active" checked> Producto Activo
+                                </label>
+                            </div>
+
+                            <button type="submit" class="btn-primary">Guardar Producto</button>
+                        </form>
+                    </div>
+                    <div id="products-list" class="products-list"></div>
+                </div>
+
+                <!-- Tab: Auditoría -->
+                <div id="audit-tab" class="admin-tab">
+                    <h3>Registro de Auditoría (ISO 9001)</h3>
+                    <button class="btn-secondary" onclick="auditLogger.exportToCSV()">📊 Exportar CSV</button>
+                    <button class="btn-secondary" onclick="clearAuditLogs()">🗑️ Limpiar Logs</button>
+                    <div id="audit-logs" class="audit-logs"></div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+        <div class="container">
+            <p>© 2026 Sistema de Gestión de Catálogo de Ropa | Patrón: Factory | Norma: ISO 9001:2015</p>
+            <p>Versión 1.0.0 | Desarrollado con HTML/CSS/JavaScript</p>
+        </div>
+    </footer>
+
+    <!-- NOTIFICACIONES -->
+    <div id="notifications-container" class="notifications-container"></div>
+
+    <!-- SCRIPTS -->
+    <!-- Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <!-- Config -->
+    <script src="./src/config.js"></script>
+
+    <!-- Modelos -->
+    <script src="./src/models/Product.js"></script>
+
+    <!-- Factory Pattern -->
+    <script src="./src/factory/ProductFactory.js"></script>
+
+    <!-- Controladores -->
+    <script src="./src/controllers/ProductController.js"></script>
+
+    <!-- Vistas -->
+    <script src="./src/views/CatalogView.js"></script>
+
+    <!-- Utilidades -->
+    <script src="./src/utils/ShoppingCart.js"></script>
+    <script src="./src/utils/AuditLogger.js"></script>
+
+    <!-- Main Script -->
+    <script src="./src/main.js"></script>
+    <div id="checkout-modal" class="custom-modal">
+    <div class="modal-content">
+    <div class="modal-header">
+      <h2>🧾 Procesar Facturación y Pago</h2>
+      <button class="close-modal-btn" onclick="closeCheckoutModal()">&times;</button>
+    </div>
+    <form id="checkout-form" onsubmit="submitCheckoutForm(event)">
+      <div class="form-group-modal">
+        <label for="modal-customer-name">Nombre Completo <span class="required">*</span></label>
+        <input type="text" id="modal-customer-name" placeholder="Ej. Juan Pérez" required>
+        <small class="form-help">Requisito obligatorio para el registro y trazabilidad de la orden.</small>
+      </div>
+      <div class="form-group-modal">
+        <label for="modal-customer-email">Correo Electrónico <span class="required">*</span></label>
+        <input type="email" id="modal-customer-email" placeholder="juan@correo.com" required>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-modal-cancel" onclick="closeCheckoutModal()">Cancelar</button>
+        <button type="submit" class="btn-modal-confirm">Confirmar Pedido</button>
+      </div>
+    </form>
+  </div>
+</div>
+</body>
+</html>
