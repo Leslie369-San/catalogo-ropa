@@ -586,39 +586,50 @@ async function handleLogin(event) {
   
   showNotification('Verificando credenciales...', 'info');
 
-  try {
-    // Consultamos el usuario haciendo un join explícito con la tabla roles
+try {
+    // Consultamos la tabla de usuarios trayendo el nombre del rol asociado
     const { data, error } = await supabaseClient
       .from('usuarios')
       .select('*, roles(nombre_rol)')
       .eq('username', usernameInput)
-      .eq('password_hash', passwordInput)
-      .single(); // Esperamos una única fila coincidente
+      .eq('password_hash', passwordInput); // Filtro directo de credenciales
 
-    if (error || !data) {
+    if (error) {
+      console.error('Error en consulta Supabase:', error);
+      showNotification('Error al conectar con la base de datos', 'error');
+      return;
+    }
+
+    // Validamos si el arreglo devuelto está vacío (credenciales incorrectas)
+    if (!data || data.length === 0) {
       showNotification('Usuario o contraseña incorrectos', 'error');
       return;
     }
 
-    // Extraemos el rol del objeto anidado devuelto por el join de Supabase
-    const userRole = data.roles ? data.roles.nombre_rol : 'cliente';
+    // Como las credenciales coinciden, tomamos el primer registro encontrado
+    const usuarioValido = data[0];
+
+    // Extraemos el rol del objeto anidado o asignamos 'cliente' por defecto
+    const userRole = (usuarioValido.roles && usuarioValido.roles.nombre_rol) 
+      ? usuarioValido.roles.nombre_rol 
+      : 'cliente';
     
-    // Guardamos el estado de la sesión en el almacenamiento temporal del navegador
+    // Almacenamos el estado de la sesión activa en el navegador
     const sessionUser = {
-      username: data.username,
-      fullName: data.nombre_completo,
+      username: usuarioValido.username,
+      fullName: usuarioValido.nombre_completo,
       role: userRole
     };
     sessionStorage.setItem('activeSession', JSON.stringify(sessionUser));
 
-    showNotification(`¡Bienvenido, ${data.nombre_completo}!`, 'success');
+    showNotification(`¡Bienvenido, ${usuarioValido.nombre_completo}!`, 'success');
     
-    // Activamos la reactividad de la interfaz según el rol asignado
+    // Aplicamos los permisos y renderizado condicional según el rol
     applyRoleAuthorization(userRole);
 
   } catch (err) {
     console.error('Error en proceso de login:', err);
-    showNotification('Error interno al conectar con el servidor', 'error');
+    showNotification('Error interno en el hilo de ejecución', 'error');
   }
 }
 
