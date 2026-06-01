@@ -29,12 +29,11 @@
 
     <!-- MAIN CONTENT -->
     <main class="main-content">
-        <!-- SECCIÓN DE CATÁLOGO -->
-        <section id="catalog-section" class="section active">
-            <section id="login-section" class="section active">
+        
+        <section id="login-section" class="section active">
             <div class="container" style="max-width: 400px; margin-top: 50px;">
                 <div class="login-card" style="background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
-                    <h3 style="text-align: center; color: #1e293b; margin-bottom: 20px;"> Ingreso al Sistema</h3>
+                    <h3 style="text-align: center; color: #1e293b; margin-bottom: 20px;">🔑 Ingreso al Sistema</h3>
                     <form id="login-form" onsubmit="handleLogin(event)">
                         <div class="form-group" style="margin-bottom: 15px;">
                             <label style="display:block; margin-bottom: 5px; font-weight:600;">Usuario</label>
@@ -49,20 +48,18 @@
                 </div>
             </div>
         </section>
+
+        <section id="catalog-section" class="section">
             <div class="container">
                 <h2>Nuestro Catálogo</h2>
                 
-                <!-- Barra de Búsqueda -->
                 <div id="search-container" class="search-container"></div>
 
-                <!-- Estadísticas -->
                 <div id="statistics" class="statistics"></div>
 
                 <div class="catalog-wrapper">
-                    <!-- Panel de Filtros -->
                     <aside id="filter-panel" class="filter-panel"></aside>
 
-                    <!-- Grid de Productos -->
                     <div class="products-section">
                         <div id="products-container" class="products-grid"></div>
                         <div id="pagination" class="pagination"></div>
@@ -71,7 +68,6 @@
             </div>
         </section>
 
-        <!-- SECCIÓN DE CARRITO -->
         <section id="cart-section" class="section">
             <div class="container">
                 <h2>Carrito de Compras</h2>
