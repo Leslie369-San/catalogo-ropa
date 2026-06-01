@@ -6,7 +6,7 @@ let currentSection = 'catalog';
 let categories = [];
 
 /**
- * Inicializa la aplicación
+ * Inicializa la aplicación de forma latente (Esperando autenticación)
  */
 async function initializeApp() {
   console.log('🚀 Iniciando Sistema de Gestión de Catálogo de Ropa...');
@@ -23,7 +23,7 @@ async function initializeApp() {
     // Cargar categorías
     await loadCategories();
 
-    // Cargar productos
+    // Cargar productos en memoria del controlador
     const result = await productController.fetchProducts();
     if (!result.success) {
       console.error('Error cargando productos:', result.error);
@@ -33,21 +33,20 @@ async function initializeApp() {
       loadMockData();
     }
 
-    // Renderizar interfaz inicial
-    await renderCatalog();
+    // Sincronizar el conteo visual del carrito
     renderCartBadge();
 
-    // Log de inicialización
+    // Log de inicialización técnica
     auditLogger.log('APP_INITIALIZED', {
       version: CONFIG.VERSION,
       productsLoaded: productController.products.length
     });
 
-    console.log('✅ Aplicación inicializada correctamente');
+    console.log('✅ Aplicación inicializada en segundo plano. Esperando Login...');
   } catch (error) {
     console.error('❌ Error en inicialización:', error);
     auditLogger.logError('APP_INITIALIZATION_FAILED', { error: error.message });
-    loadMockData(); // Cargar datos de prueba como fallback
+    loadMockData(); // Fallback de contingencia
   }
 }
 
@@ -140,7 +139,6 @@ function goToPage(page) {
 /**
  * Aplica los filtros seleccionados
  */
-// Al final de la función applyFilters() en main.js, déjala estructurada así:
 function applyFilters() {
   const categorySelect = document.getElementById('category-filter');
   const priceRange = document.getElementById('price-filter');
@@ -158,17 +156,12 @@ function applyFilters() {
     productController.filterByPrice(0, maxPrice);
   }
 
-  // Forzamos a la vista a renderizar los productos que el controlador acaba de filtrar
   const filtered = productController.getPaginatedProducts(1);
   catalogView.render(filtered);
   catalogView.renderPagination(1, productController.getTotalPages());
-  
-  // Actualizamos estadísticas por si cambian en la vista filtrada
   catalogView.renderStatistics(productController.getStatistics());
 
-  auditLogger.log('FILTERS_APPLIED_AND_RENDERED', {
-    count: filtered.length
-  });
+  auditLogger.log('FILTERS_APPLIED_AND_RENDERED', { count: filtered.length });
 }
 
 /**
@@ -251,18 +244,15 @@ function renderCartSection() {
  * Navega a una sección específica
  */
 function goToSection(sectionName) {
-  // Ocultar todas las secciones
   document.querySelectorAll('.section').forEach(section => {
     section.classList.remove('active');
   });
 
-  // Mostrar sección seleccionada
   const section = document.getElementById(`${sectionName}-section`);
   if (section) {
     section.classList.add('active');
     currentSection = sectionName;
 
-    // Renderizar contenido específico
     if (sectionName === 'cart') {
       renderCartSection();
     } else if (sectionName === 'admin') {
@@ -271,11 +261,13 @@ function goToSection(sectionName) {
       renderCatalog();
     }
 
-    // Actualizar nav activa
-    document.querySelectorAll('.nav-btn').forEach((btn, idx) => {
+    document.querySelectorAll('.nav-btn').forEach((btn) => {
       btn.classList.remove('active');
     });
-    event.target.classList.add('active');
+    
+    if (event && event.target && event.target.classList.contains('nav-btn')) {
+      event.target.classList.add('active');
+    }
 
     window.scrollTo(0, 0);
     auditLogger.log('SECTION_CHANGED', { section: sectionName });
@@ -286,14 +278,12 @@ function goToSection(sectionName) {
  * Renderiza el panel de administración
  */
 function renderAdminPanel() {
-  // Rellenar select de categorías
   const categorySelect = document.getElementById('category-select');
   if (categorySelect) {
     categorySelect.innerHTML = categories
       .map(cat => `<option value="${cat.id}">${cat.name}</option>`)
       .join('');
   }
-
   showAdminTab('dashboard');
 }
 
@@ -301,22 +291,14 @@ function renderAdminPanel() {
  * Muestra una pestaña del admin
  */
 function showAdminTab(tabName) {
-  // Ocultar todas las pestañas
-  document.querySelectorAll('.admin-tab').forEach(tab => {
-    tab.classList.remove('active');
-  });
+  document.querySelectorAll('.admin-tab').forEach(tab => tab.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
 
-  document.querySelectorAll('.tab-btn').forEach(btn => {
-    btn.classList.remove('active');
-  });
-
-  // Mostrar pestaña seleccionada
   const tab = document.getElementById(`${tabName}-tab`);
   if (tab) {
     tab.classList.add('active');
-    event.target.classList.add('active');
+    if (event && event.target) event.target.classList.add('active');
 
-    // Cargar contenido específico
     if (tabName === 'dashboard') {
       loadDashboard();
     } else if (tabName === 'products') {
@@ -350,15 +332,11 @@ function loadDashboard() {
     </div>
     <div class="stat-card">
       <span class="stat-label">Precio Promedio</span>
-      <span class="stat-value">\$${stats.averagePrice}</span>
+      <span class="stat-value">$${stats.averagePrice}</span>
     </div>
     <div class="stat-card">
       <span class="stat-label">Stock Total</span>
       <span class="stat-value">${stats.totalStock}</span>
-    </div>
-    <div class="stat-card">
-      <span class="stat-label">Items en Carrito</span>
-      <span class="stat-value">${shoppingCart.getItemCount()}</span>
     </div>
   `;
 
@@ -370,12 +348,13 @@ function loadDashboard() {
         ${pendingProducts.map(p => `
           <div class="pending-item">
             <span>${p.name} (${p.code})</span>
-            <span>Estado: ${p.qualityStatus}</span>
             <button onclick="approveProduct(${p.id})">Aprobar</button>
           </div>
         `).join('')}
       </div>
     `;
+  } else {
+    pendingContainer.innerHTML = '';
   }
 }
 
@@ -391,7 +370,6 @@ function loadProductsList() {
         <tr>
           <th>Código</th>
           <th>Nombre</th>
-          <th>Categoría</th>
           <th>Precio</th>
           <th>Stock</th>
           <th>Estado</th>
@@ -403,12 +381,10 @@ function loadProductsList() {
           <tr>
             <td>${p.code}</td>
             <td>${p.name}</td>
-            <td>${p.category || categories.find(c => c.id == p.categoryId)?.name || 'Sin categoría'}</td>
             <td>$${p.price.toFixed(2)}</td>
             <td>${p.stock}</td>
             <td><span class="badge status-${p.qualityStatus}">${p.qualityStatus}</span></td>
             <td>
-              <button onclick="editProduct(${p.id})" class="btn-small">✏️</button>
               <button onclick="deleteProductAdmin(${p.id})" class="btn-small btn-danger">🗑️</button>
             </td>
           </tr>
@@ -457,7 +433,6 @@ function loadAuditLogs() {
  */
 async function handleProductSubmit(event) {
   event.preventDefault();
-
   try {
     const product = ProductFactory.createFromForm(event.target);
     const result = await productController.createProduct(product.toJSON());
@@ -466,14 +441,12 @@ async function handleProductSubmit(event) {
       event.target.reset();
       showNotification('Producto creado correctamente', 'success');
       loadProductsList();
-      auditLogger.log('PRODUCT_CREATED', { productId: result.data.id, productName: product.name });
+      renderCatalog();
     } else {
       showNotification(result.errors.join(', '), 'error');
     }
   } catch (error) {
     console.error('Error al crear producto:', error);
-    showNotification('Error al crear producto', 'error');
-    auditLogger.logError('PRODUCT_CREATION_FAILED', { error: error.message });
   }
 }
 
@@ -482,14 +455,11 @@ async function handleProductSubmit(event) {
  */
 async function deleteProductAdmin(productId) {
   if (!confirm('¿Estás seguro de que deseas eliminar este producto?')) return;
-
   const result = await productController.deleteProduct(productId);
   if (result.success) {
     showNotification('Producto eliminado', 'success');
     loadProductsList();
     renderCatalog();
-  } else {
-    showNotification('Error al eliminar producto', 'error');
   }
 }
 
@@ -500,7 +470,6 @@ async function approveProduct(productId) {
   const result = await productController.updateProduct(productId, {
     quality_status: QUALITY_STATUS.APPROVED
   });
-
   if (result.success) {
     showNotification('Producto aprobado', 'success');
     loadDashboard();
@@ -520,7 +489,7 @@ function clearAuditLogs() {
 }
 
 /**
- * Muestra una notificación
+ * Muestra una notificación en pantalla
  */
 function showNotification(message, type = 'info') {
   const container = document.getElementById('notifications-container');
@@ -538,13 +507,12 @@ function showNotification(message, type = 'info') {
 }
 
 /**
- * Alterna el tema (claro/oscuro)
+ * Alterna el tema claro/oscuro
  */
 function toggleTheme() {
   document.body.classList.toggle('dark-theme');
   const isDark = document.body.classList.contains('dark-theme');
   localStorage.setItem('theme', isDark ? 'dark' : 'light');
-  auditLogger.log('THEME_TOGGLED', { theme: isDark ? 'dark' : 'light' });
 }
 
 /**
@@ -557,26 +525,8 @@ function loadTheme() {
   }
 }
 
-// ========================================
-// INICIALIZACIÓN AL CARGAR LA PÁGINA
-// ========================================
-
-document.addEventListener('DOMContentLoaded', () => {
-  loadTheme();
-  initializeApp();
-});
-
-// Actualizar carrito cuando cambia
-window.addEventListener('storage', (event) => {
-  if (event.key === 'shoppingCart') {
-    shoppingCart.items = shoppingCart.loadFromStorage();
-    renderCartBadge();
-  }
-});
-
-console.log('✅ Script principal cargado');
 /**
- * Gestiona la autenticación de usuarios y asignación condicional de roles
+ * CONTROLADOR DE AUTENTICACIÓN (LOGIN DE USUARIOS)
  */
 async function handleLogin(event) {
   event.preventDefault();
@@ -586,35 +536,29 @@ async function handleLogin(event) {
   
   showNotification('Verificando credenciales...', 'info');
 
-try {
-    // Consultamos la tabla de usuarios trayendo el nombre del rol asociado
+  try {
     const { data, error } = await supabaseClient
       .from('usuarios')
       .select('*, roles(nombre_rol)')
       .eq('username', usernameInput)
-      .eq('password_hash', passwordInput); // Filtro directo de credenciales
+      .eq('password_hash', passwordInput);
 
     if (error) {
       console.error('Error en consulta Supabase:', error);
-      showNotification('Error al conectar con la base de datos', 'error');
+      showNotification('Error de comunicación con el servidor', 'error');
       return;
     }
 
-    // Validamos si el arreglo devuelto está vacío (credenciales incorrectas)
     if (!data || data.length === 0) {
       showNotification('Usuario o contraseña incorrectos', 'error');
       return;
     }
 
-    // Como las credenciales coinciden, tomamos el primer registro encontrado
     const usuarioValido = data[0];
-
-    // Extraemos el rol del objeto anidado o asignamos 'cliente' por defecto
     const userRole = (usuarioValido.roles && usuarioValido.roles.nombre_rol) 
       ? usuarioValido.roles.nombre_rol 
       : 'cliente';
     
-    // Almacenamos el estado de la sesión activa en el navegador
     const sessionUser = {
       username: usuarioValido.username,
       fullName: usuarioValido.nombre_completo,
@@ -623,52 +567,56 @@ try {
     sessionStorage.setItem('activeSession', JSON.stringify(sessionUser));
 
     showNotification(`¡Bienvenido, ${usuarioValido.nombre_completo}!`, 'success');
-    
-    // Aplicamos los permisos y renderizado condicional según el rol
     applyRoleAuthorization(userRole);
 
   } catch (err) {
     console.error('Error en proceso de login:', err);
-    showNotification('Error interno en el hilo de ejecución', 'error');
+    showNotification('Error crítico en el flujo de autenticación', 'error');
   }
 }
 
 /**
- * Renderizado Condicional: Muestra u oculta módulos del DOM según el rol jerárquico
+ * RENDERIZADO CONDICIONAL POR ROLES
  */
 function applyRoleAuthorization(role) {
-  // 1. Ocultar de inmediato la sección del formulario de login
   document.getElementById('login-section').classList.remove('active');
   
-  // 2. Recuperar referencias de los botones de la barra de navegación
   const catalogBtn = document.getElementById('nav-catalog-btn');
   const cartBtn = document.getElementById('nav-cart-btn');
   const adminBtn = document.getElementById('nav-admin-btn');
 
-  // 3. Habilitar accesos comunes para ambos roles
   if (catalogBtn) catalogBtn.style.display = 'inline-block';
   if (cartBtn) cartBtn.style.display = 'inline-block';
 
-  // 4. Aplicar restricción estricta sobre el panel de control administrativo
   if (role === 'admin') {
     if (adminBtn) adminBtn.style.display = 'inline-block';
-    // Redirección por defecto al panel de control integral
     goToSection('admin');
   } else {
     if (adminBtn) adminBtn.style.display = 'none';
-    // Redirección por defecto a la vista comercial de clientes
     goToSection('catalog');
   }
 }
-document.addEventListener('DOMContentLoaded', () => {
-  loadTheme();
-  initializeApp();
 
-  // Verificación preventiva de persistencia de sesión
+// ========================================
+// UNICO PUNTO DE ENTRADA DOMContentLoaded
+// ========================================
+document.addEventListener('DOMContentLoaded', async () => {
+  loadTheme();
+  await initializeApp();
+
+  // Validación preventiva de persistencia de sesión
   const savedSession = sessionStorage.getItem('activeSession');
   if (savedSession) {
     const user = JSON.parse(savedSession);
-    // Demora sutil para esperar el renderizado del catálogo cloud
     setTimeout(() => applyRoleAuthorization(user.role), 500);
   }
 });
+
+window.addEventListener('storage', (event) => {
+  if (event.key === 'shoppingCart') {
+    shoppingCart.items = shoppingCart.loadFromStorage();
+    renderCartBadge();
+  }
+});
+
+console.log('✅ Script principal orquestado correctamente');
