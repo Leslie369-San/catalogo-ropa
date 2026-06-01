@@ -588,6 +588,9 @@ function applyRoleAuthorization(role) {
   if (catalogBtn) catalogBtn.style.display = 'inline-block';
   if (cartBtn) cartBtn.style.display = 'inline-block';
 
+  const logoutBtn = document.getElementById('nav-logout-btn');
+  if (logoutBtn) logoutBtn.style.display = 'inline-block';
+
   if (role === 'admin') {
     if (adminBtn) adminBtn.style.display = 'inline-block';
     goToSection('admin');
@@ -595,6 +598,25 @@ function applyRoleAuthorization(role) {
     if (adminBtn) adminBtn.style.display = 'none';
     goToSection('catalog');
   }
+}
+function handleLogout() {
+  sessionStorage.removeItem('activeSession');
+
+  // Ocultar botones del nav
+  document.getElementById('nav-catalog-btn').style.display = 'none';
+  document.getElementById('nav-cart-btn').style.display = 'none';
+  document.getElementById('nav-admin-btn').style.display = 'none';
+  document.getElementById('nav-logout-btn').style.display = 'none';
+
+  // Volver al login
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.getElementById('login-section').classList.add('active');
+
+  // Limpiar el formulario
+  document.getElementById('login-form').reset();
+
+  auditLogger.log('USER_LOGOUT', {});
+  showNotification('Sesión cerrada correctamente', 'info');
 }
 
 // ========================================
